@@ -56,16 +56,14 @@ class SetUserPasswordPlugin(base.BasePlugin):
             password = None
 
         if password:
-            LOG.warn('Using admin_pass metadata user password. Consider '
-                     'changing it as soon as possible')
+            LOG.info('we have got password')
         else:
             # TODO(alexpilotti): setting a random password can be skipped
             # if it's already present in the shared_data, as it has already
             # been set by the CreateUserPlugin
-            LOG.debug('Generating a random user password')
-            # Generate a random password
+            LOG.warn('Password is not pass in, So set the default password')
             # Limit to 14 chars for compatibility with NT
-            password = osutils.generate_random_password(14)
+            password = "windows123!@#"
 
         return password
 
@@ -91,20 +89,14 @@ class SetUserPasswordPlugin(base.BasePlugin):
         user_name = shared_data.get(constants.SHARED_DATA_USERNAME,
                                     CONF.username)
 
-        if service.can_post_password and service.is_password_set:
-            LOG.debug('User\'s password already set in the instance metadata')
+        osutils = osutils_factory.get_os_utils()
+        if osutils.user_exists(user_name):
+            password = self._set_password(service, osutils, user_name)
+            # TODO(alexpilotti): encrypt with DPAPI
+            shared_data[constants.SHARED_DATA_PASSWORD] = password
+            LOG.info('user %s set password OK' % user_name)
+            return (base.PLUGIN_EXECUTION_DONE, False)
         else:
-            osutils = osutils_factory.get_os_utils()
-            if osutils.user_exists(user_name):
-                password = self._set_password(service, osutils, user_name)
-                # TODO(alexpilotti): encrypt with DPAPI
-                shared_data[constants.SHARED_DATA_PASSWORD] = password
-
-                if not service.can_post_password:
-                    LOG.info('Cannot set the password in the metadata as it '
-                             'is not supported by this service')
-                    return (base.PLUGIN_EXECUTION_DONE, False)
-                else:
-                    self._set_metadata_password(password, service)
-
-        return (base.PLUGIN_EXECUTE_ON_NEXT_BOOT, False)
+            LOG.warn('user %s is not exists, ignored, we don\'t create it' % user_name)
+            LOG.warn('set user_password failed, but I set the plugin Done')
+            return (base.PLUGIN_EXECUTION_DONE, False)

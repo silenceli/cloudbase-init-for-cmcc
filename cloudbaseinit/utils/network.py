@@ -19,10 +19,12 @@ from six.moves.urllib import request
 
 from cloudbaseinit.openstack.common import log as logging
 from cloudbaseinit.osutils import factory as osutils_factory
+import time
+
 
 LOG = logging.getLogger(__name__)
 
-MAX_URL_CHECK_RETRIES = 3
+MAX_URL_CHECK_RETRIES = 120
 
 
 def check_url(url, retries_count=MAX_URL_CHECK_RETRIES):
@@ -32,7 +34,7 @@ def check_url(url, retries_count=MAX_URL_CHECK_RETRIES):
             request.urlopen(url)
             return True
         except Exception:
-            pass
+            time.sleep(1)
     return False
 
 

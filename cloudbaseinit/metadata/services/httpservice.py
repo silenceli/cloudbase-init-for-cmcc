@@ -86,11 +86,7 @@ class HttpService(baseopenstackservice.BaseOpenStackService):
 
     @property
     def can_post_password(self):
-        try:
-            self._get_meta_data(self._POST_PASSWORD_MD_VER)
-            return True
-        except base.NotExistingMetadataException:
-            return False
+        return False
 
     @property
     def is_password_set(self):

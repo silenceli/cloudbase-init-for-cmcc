@@ -524,12 +524,12 @@ class VfatManager(WindowsConfigDriveManager):
                         try:
                             fp.write(buf[0:(num-1)*self.cluster_size-size])
                         except Exception, e:
-                             LOG.error(e)
+                            LOG.error(e)
                     else:
                         try:
                             fp.write(buf[0:self.cluster_size])
                         except Exception, e:
-                             LOG.error(e)
+                            LOG.error(e)
                     buf = ""
                     i += 1
             fp.close()

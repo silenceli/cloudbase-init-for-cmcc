@@ -20,6 +20,7 @@ from oslo.config import cfg
 from cloudbaseinit.metadata.services import base
 from cloudbaseinit.openstack.common import log as logging
 from cloudbaseinit.utils import x509constants
+import yaml
 
 opts = [
     cfg.StrOpt('metadata_base_url', default='http://169.254.169.254/',
@@ -65,17 +66,26 @@ class BaseOpenStackService(base.BaseMetadataService):
         return self._get_meta_data().get('network_config')
 
     def get_admin_password(self):
-        meta_data = self._get_meta_data()
-        meta = meta_data.get('meta')
-
-        if meta and 'admin_pass' in meta:
-            password = meta['admin_pass']
-        elif 'admin_pass' in meta_data:
-            password = meta_data['admin_pass']
-        else:
-            password = None
-
+        user_data = self.get_user_data()
+        if user_data == None:
+            LOG.debug('user_data is None')
+            return None
+        elif user_data == '':
+            LOG.debug('user_data is NULL')
+            return None
+        LOG.info('get user_data OK')
+        args = yaml.load(user_data)
+        plist = args['chpasswd']['list']
+        if plist == "":
+            LOG.debug('password is NULL')
+            return None
+        u, p = plist.split(':', 1)
+        if p == "":
+            LOG.debug('password is NULL')
+            return None
+        password = p
         return password
+
 
     def get_client_auth_certs(self):
         cert_data = None

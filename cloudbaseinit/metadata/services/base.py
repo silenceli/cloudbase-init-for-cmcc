@@ -90,8 +90,12 @@ class BaseMetadataService(object):
             LOG.debug("Using cached copy of metadata: '%s'" % path)
             return self._cache[path]
         else:
-            data = self._exec_with_retry(lambda: self._get_data(path))
-            self._cache[path] = data
+            try:
+                data = self._exec_with_retry(lambda: self._get_data(path))
+                self._cache[path] = data
+            except Exception:
+                LOG.warn('can\'t get cache data for path %s' % path)
+                return None
             return data
 
     def get_instance_id(self):
