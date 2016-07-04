@@ -74,17 +74,52 @@ class BaseOpenStackService(base.BaseMetadataService):
             LOG.debug('user_data is NULL')
             return None
         LOG.info('get user_data OK')
-        args = yaml.load(user_data)
-        plist = args['chpasswd']['list']
-        if plist == "":
-            LOG.debug('password is NULL')
+        #pos_line_1 is list, contain the position of any #cloud-config
+        pos_line_1 = []
+        pos = user_data.find("#cloud-config")
+        if pos == -1:
+            LOG.warn("user-data contain no #cloud-config, password will be setted to default pw.")
             return None
-        u, p = plist.split(':', 1)
-        if p == "":
-            LOG.debug('password is NULL')
-            return None
-        password = p
-        return password
+        #get all #cloud-config position into pos_line_1
+        while pos != -1:
+            pos_line_1.append(pos)
+            pos = user_data.find("#cloud-config", pos + len("#cloud-config"))
+        
+        i = 0
+        #1. we get password from first #cloud-config, if not have, we get from second #cloud-config
+        #and so on
+        #next_pos is the next position of #cloud-config in user_data
+        while i < len(pos_line_1):
+            if len(pos_line_1) <= (i + 1):
+                next_pos = -1
+            else:
+                next_pos = pos_line_1[i+1]
+            pos_2 = user_data.find("disable_root:", pos_line_1[i]+1)
+            if pos_2 == -1:
+                LOG.warn("user-data contain no disable_root:, password will be setted to default pw.")
+                return None
+            elif pos_2 >= next_pos and next_pos != -1:
+                i = i + 1
+                continue
+            pos_3 = user_data.find("password:", pos_2+1)
+            if pos_3 == -1:
+                LOG.warn("user-data contain no password:, password will be setted to default pw.")
+                return None
+            elif pos_3 >= next_pos and next_pos != -1:
+                i = i + 1
+                continue
+            pos_4 = user_data.find("chpasswd:", pos_3+1)
+            if pos_4 == -1:
+                LOG.warn("user-data contain no chpasswd:, password will be setted to default pw.")
+                return None
+            elif pos_4 >= next_pos and next_pos != -1:
+                i = i + 1
+                continue
+            password = user_data[pos_3 + len("password:"):pos_4]
+            LOG.info("we got password from user-data")
+            return password.lstrip()
+        LOG.warn("Should not come here, password will be setted to default pw.")
+        return None
 
 
     def get_client_auth_certs(self):

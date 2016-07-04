@@ -623,8 +623,8 @@ class WindowsUtils(base.BaseOSUtils):
                 return -1
             else:
                 os.close(fp)
-	time.sleep(30)
-	try:
+                time.sleep(10)
+        try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
                                 "SYSTEM\\Setup\\Status\\SysprepStatus", 0,
                                 winreg.KEY_READ) as key:
@@ -642,7 +642,7 @@ class WindowsUtils(base.BaseOSUtils):
                           'skipping sysprep completion check.')
             else:
                 raise ex
-	return 0
+        return 0
 
     def _get_service(self, service_name):
         conn = wmi.WMI(moniker='//./root/cimv2')

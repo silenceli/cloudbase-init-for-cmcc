@@ -156,6 +156,9 @@ class CloudConfigPlugin(base.BaseUserDataPlugin):
         except ValueError:
             LOG.error("Invalid yaml stream provided.")
             return False
+        except Exception:
+            LOG.error("yaml.load error, return False")
+            return False
 
         if not isinstance(content, dict):
             LOG.warning("Unsupported content type %s", type(content))
